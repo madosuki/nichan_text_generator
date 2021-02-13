@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 pwhash = "1"
+regex = "1"
+encoding = "0.2"
