@@ -2,43 +2,44 @@ use std::collections::HashMap;
 use pwhash::unix::crypt;
 use regex::Regex;
 
-use encoding::{Encoding, EncoderTrap};
+use encoding::{Encoding, EncoderTrap, DecoderTrap};
 use encoding::all::WINDOWS_31J;
 
 pub fn create_trip(key: &str) -> String {
-    let bytes = WINDOWS_31J.encode(key, EncoderTrap::Strict);
-    let mut tmp: Vec<u8> = vec!();
-    let mut salt_base: Vec<u8> = vec!();
-    let mut is_first = true;
+    let key_base = key[1..].to_owned();
+    let bytes = WINDOWS_31J.encode(&key_base, EncoderTrap::Strict).unwrap();
+
+    let mut salt_base: Vec<char> = vec!();
+    let mut key_bytes: Vec<char> = vec!();
+    
     let mut count = 0;
-    for i in bytes {
-        for j in i {
-            if !is_first {
-                tmp.push(j.to_owned());
+    for i in &bytes {
 
-                if count == 1 || count == 2 {
-                    salt_base.push(j.to_owned());
-                }
-
-                count = count + 1;
-            } else {
-                is_first = false;
-            }
-
-            if tmp.len() == 8 {
-                break;
-            }
+        key_bytes.push(i.to_owned() as char);
+        
+        if count == 1 || count == 2 {
+            salt_base.push(i.to_owned() as char);
         }
+
+        if count == 8 {
+            break;
+        }
+
+        count = count + 1;
     }
 
-    let key_test_decode = String::from_utf8_lossy(&tmp);
-    let owned_key = key_test_decode.as_ref().to_owned();
+    // let key_test_decode = String::from_utf8_lossy(&key_bytes);
+    // let trip_key = key_test_decode.as_ref().to_owned();
+    let trip_key: String = key_bytes.iter().collect();
 
-    let salt_base_test_decode = String::from_utf8_lossy(&salt_base);
-    let salt_base_string = salt_base_test_decode.as_ref().to_owned();
-    
-    println!("salt: {}", salt_base_string);
-    println!("key: {}", owned_key);
+    // let salt_base_test_decode = String::from_utf8_lossy(&salt_base);
+    // let salt_base_string = salt_base_test_decode.as_ref().to_owned();
+
+    let salt_base_string: String = salt_base.iter().collect();
+
+    println!("salt_base size: {}", salt_base.len());
+    println!("salt: {}, size: {}", salt_base_string, salt_base_string.len());
+    println!("tripe key: {}", trip_key);
     
     let prepare1 =
         if salt_base_string.len() == 2 {
@@ -77,7 +78,10 @@ pub fn create_trip(key: &str) -> String {
     let prepare2 = re.replace_all(&prepare1, ".");
     let salt = my_tr(&prepare2);
 
-    let _crypted = crypt(&owned_key, &salt);
+    println!("final salt: {}", salt);
+    println!("final salt size: {}", salt.len());
+
+    let _crypted = crypt(&trip_key, &salt);
     
     let get_result = |a: &str| -> String {
         let start = a.len() - 10;
@@ -90,7 +94,10 @@ pub fn create_trip(key: &str) -> String {
 
     match _crypted {
         Ok(v) => { get_result(&v) }
-        Err(_e) => "".to_owned()
+        Err(_e) => {
+            println!("crypt error: {}", _e);
+            "".to_owned()
+        }
     }
 }
 
