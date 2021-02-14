@@ -8,11 +8,19 @@ use encoding::all::WINDOWS_31J;
 pub fn create_trip(key: &str) -> String {
     let bytes = WINDOWS_31J.encode(key, EncoderTrap::Strict);
     let mut tmp: Vec<u8> = vec!();
+    let mut salt_base: Vec<u8> = vec!();
     let mut is_first = true;
+    let mut count = 0;
     for i in bytes {
         for j in i {
             if !is_first {
                 tmp.push(j.to_owned());
+
+                if count == 1 || count == 2 {
+                    salt_base.push(j.to_owned());
+                }
+
+                count = count + 1;
             } else {
                 is_first = false;
             }
@@ -23,14 +31,20 @@ pub fn create_trip(key: &str) -> String {
         }
     }
 
-    let test_decode = String::from_utf8_lossy(&tmp);
-    let owned_key = test_decode.as_ref().to_owned();
-    // let owned_key = test_decode;
+    let key_test_decode = String::from_utf8_lossy(&tmp);
+    let owned_key = key_test_decode.as_ref().to_owned();
 
+    let salt_base_test_decode = String::from_utf8_lossy(&salt_base);
+    let salt_base_string = salt_base_test_decode.as_ref().to_owned();
+    
+    println!("salt: {}", salt_base_string);
+    println!("key: {}", owned_key);
+    
     let prepare1 =
-        if owned_key.len() > 3 {
-            owned_key[1..3].to_owned()
-        } else { format!("{}H.", key) };
+        if salt_base_string.len() == 2 {
+            salt_base_string
+        } else { format!("{}H.", salt_base_string) };
+
     let re = Regex::new(r"[^.-z]").unwrap();
 
     let my_tr = |a: &str| -> String {
@@ -62,6 +76,7 @@ pub fn create_trip(key: &str) -> String {
     
     let prepare2 = re.replace_all(&prepare1, ".");
     let salt = my_tr(&prepare2);
+
     let _crypted = crypt(&owned_key, &salt);
     
     let get_result = |a: &str| -> String {
