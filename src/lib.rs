@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 use pwhash::unix::crypt;
 use regex::Regex;
@@ -26,8 +25,12 @@ pub fn create_trip(key: &str) -> String {
 
     let test_decode = String::from_utf8_lossy(&tmp);
     let owned_key = test_decode.as_ref().to_owned();
-    
-    let prepare1 = if owned_key.len() > 3 { owned_key[1..3].to_owned() } else { format!("{}H.", key) };
+    // let owned_key = test_decode;
+
+    let prepare1 =
+        if owned_key.len() > 3 {
+            owned_key[1..3].to_owned()
+        } else { format!("{}H.", key) };
     let re = Regex::new(r"[^.-z]").unwrap();
 
     let my_tr = |a: &str| -> String {
