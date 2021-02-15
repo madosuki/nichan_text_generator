@@ -6,17 +6,17 @@ use encoding::{Encoding, EncoderTrap, DecoderTrap};
 use encoding::all::WINDOWS_31J;
 
 pub fn create_trip(key: &str) -> String {
-    let key_base = key[1..].to_owned();
-    let bytes = WINDOWS_31J.encode(&key_base, EncoderTrap::Strict).unwrap();
+    let base = key[1..].to_owned();
+    let bytes = WINDOWS_31J.encode(&base, EncoderTrap::Strict).unwrap();
 
     let mut salt_base: Vec<char> = vec!();
-    let mut key_bytes: Vec<char> = vec!();
+    let mut key_base: Vec<char> = vec!();
     
     let mut count = 0;
     for i in &bytes {
 
-        key_bytes.push(i.to_owned() as char);
-        
+        key_base.push(i.to_owned() as char);
+
         if count == 1 || count == 2 {
             salt_base.push(i.to_owned() as char);
         }
@@ -28,9 +28,27 @@ pub fn create_trip(key: &str) -> String {
         count = count + 1;
     }
 
-    // let key_test_decode = String::from_utf8_lossy(&key_bytes);
-    // let trip_key = key_test_decode.as_ref().to_owned();
-    let trip_key: String = key_bytes.iter().collect();
+    // let mut print_count = 0;
+    // for i in &salt_base {
+    //     println!("count: {}, salt char: {}", print_count, i);
+    //     print_count = print_count + 1;
+    // }
+    
+    // let decoded_salt =
+    //     match WINDOWS_31J.decode(&salt_base, DecoderTrap::Strict) {
+    //         Ok(v) => v,
+    //         Err(_e) => {
+    //             println!("decode error: {}", _e);
+    //             "".to_owned()
+    //         }
+    //     };
+
+    // if decoded == "" {
+    //     return "".to_owned()
+    // }
+
+    // let trip_key = decoded;
+    let trip_key: String = key_base.iter().collect();
 
     // let salt_base_test_decode = String::from_utf8_lossy(&salt_base);
     // let salt_base_string = salt_base_test_decode.as_ref().to_owned();
@@ -77,6 +95,7 @@ pub fn create_trip(key: &str) -> String {
     
     let prepare2 = re.replace_all(&prepare1, ".");
     let salt = my_tr(&prepare2);
+    // let salt = salt_base_string;
 
     println!("final salt: {}", salt);
     println!("final salt size: {}", salt.len());
