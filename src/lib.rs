@@ -1,5 +1,10 @@
 use std::collections::HashMap;
+use chrono::{DateTime, Utc};
+use hex;
+use crypto::digest::Digest;
+use crypto::sha1::Sha1;
 use pwhash::unix::crypt;
+use base64;
 use regex::Regex;
 
 use encoding::{Encoding, EncoderTrap};
@@ -105,7 +110,22 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
     if bytes.len() < 12  {
         old_trip(bytes)
     } else {
-        None
+        let mut hasher = Sha1::new();
+        hasher.input(&bytes);
+        
+        let sha1_str = hasher.result_str();
+        println!("sha1: {}", sha1_str);
+        
+        let hex_bytes = hex::decode(sha1_str).unwrap();
+        for i in &hex_bytes {
+            println!("hex byte: {}", i);
+        }
+        
+        let sha1_base64_str = base64::encode(hex_bytes);
+
+        let result = format!("◆{}", sha1_base64_str[..12].to_string());
+        
+        Some(result)
     }
 }
 
@@ -123,5 +143,8 @@ mod tests {
 
         let second_result = "◆pA8Bpf.Qvk".to_owned();
         assert_eq!(create_trip("#ニコニコ", OldTripDigit::Ten), Some(second_result));
+
+        let third_result = "◆MtEMe4z5ZXDK".to_owned();
+        assert_eq!(create_trip("#abcdefghijklmnopqrstuvwxyz", OldTripDigit::None), Some(third_result));
     }
 }
