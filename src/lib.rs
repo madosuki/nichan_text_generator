@@ -1,8 +1,9 @@
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, TimeZone, NaiveDateTime, Datelike};
 use hex;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
+use crypto::md5::Md5;
 use pwhash::unix::crypt;
 use base64;
 use regex::Regex;
@@ -114,13 +115,7 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
         hasher.input(&bytes);
         
         let sha1_str = hasher.result_str();
-        println!("sha1: {}", sha1_str);
-        
         let hex_bytes = hex::decode(sha1_str).unwrap();
-        for i in &hex_bytes {
-            println!("hex byte: {}", i);
-        }
-        
         let sha1_base64_str = base64::encode(hex_bytes);
 
         let result = format!("◆{}", sha1_base64_str[..12].to_string());
@@ -129,8 +124,24 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
     }
 }
 
+pub fn create_id(date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, secret_key: &str) -> String {
+    let a_day_tmp = date_time.day();
+    let a_day = if a_day_tmp < 10 { format!("0{}", a_day_tmp)} else { a_day_tmp.to_string() };
 
+    let target = format!("{}{}{}{}", a_day, bbs_key, ip_addr, secret_key);
+    
+    let mut hasher = Md5::new();
+    hasher.input(target.as_bytes());
+    let md5_str = hasher.result_str();
+    let hex_bytes = hex::decode(md5_str).unwrap();
+    let md5_base64_str = base64::encode(hex_bytes);
 
+    md5_base64_str[..8].to_string()
+}
+
+pub fn apply_dice(text: &str) -> String {
+    "".to_string()
+}
 
 #[cfg(test)]
 mod tests {
@@ -146,5 +157,11 @@ mod tests {
 
         let third_result = "◆MtEMe4z5ZXDK".to_owned();
         assert_eq!(create_trip("#abcdefghijklmnopqrstuvwxyz", OldTripDigit::None), Some(third_result));
+    }
+
+    #[test]
+    fn test_create_id() {
+        let date = NaiveDateTime::parse_from_str("2021/02/17 18:01:23", "%Y/%m/%d %H:%M:%S").unwrap();
+        assert_eq!(create_id(date, "key", "127.0.0.1", "test_secret_key"), "JBs13t0r");
     }
 }
