@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use chrono::{DateTime, Utc, TimeZone, NaiveDateTime, Datelike};
+use chrono::{NaiveDateTime, Datelike};
 use hex;
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
@@ -126,8 +126,8 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
     }
 }
 
-pub fn create_id(date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, secret_key: &str) -> String {
-    let a_day_tmp = date_time.day();
+pub fn create_id(naive_date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, secret_key: &str) -> String {
+    let a_day_tmp = naive_date_time.day();
     let a_day = if a_day_tmp < 10 { format!("0{}", a_day_tmp)} else { a_day_tmp.to_string() };
 
     let target = format!("{}{}{}{}", a_day, bbs_key, ip_addr, secret_key);
@@ -164,6 +164,10 @@ pub fn apply_dice(text: &str) -> String {
     });
 
     replace_result.to_owned().to_string()
+}
+
+fn create_date(naive_date_time: NaiveDateTime) -> String  {
+    "".to_string()
 }
 
 #[cfg(test)]
