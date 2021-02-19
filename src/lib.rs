@@ -166,8 +166,9 @@ pub fn apply_dice(text: &str) -> String {
     replace_result.to_owned().to_string()
 }
 
-fn create_date(naive_date_time: NaiveDateTime) -> String  {
-    "".to_string()
+fn create_date(_naive_date_time: NaiveDateTime) -> String  {
+    let str = _naive_date_time.format("%Y/%m/%d(%a) %H:%M:%S.%f").to_string();
+    str
 }
 
 #[cfg(test)]
@@ -188,7 +189,10 @@ mod tests {
 
     #[test]
     fn test_create_id() {
-        let date = NaiveDateTime::parse_from_str("2021/02/17 18:01:23", "%Y/%m/%d %H:%M:%S").unwrap();
+        let date_format = "%Y/%m/%d %H:%M:%S";
+        let date_str = "2021/02/17 18:01:23";
+        let date = NaiveDateTime::parse_from_str(date_str, date_format).unwrap();
+
         assert_eq!(create_id(date, "key", "127.0.0.1", "test_secret_key"), "JBs13t0r");
     }
 
@@ -196,5 +200,14 @@ mod tests {
     fn test_apply_dice() {
         let re = Regex::new(r"!([0-9]{1,3})[dD]([0-9]{1,4})").unwrap();
         assert_eq!(re.is_match(&apply_dice("!1d100")), false);
+    }
+
+    #[test]
+    fn test_create_date() {
+        let date_format = "%Y/%m/%d %H:%M:%S";
+        let date_str = "2021/02/17 18:01:23";
+        let date = NaiveDateTime::parse_from_str(date_str, date_format).unwrap();
+
+        assert_eq!(create_date(date), "2021/02/17(Wed) 18:01:23.000000000");
     }
 }
