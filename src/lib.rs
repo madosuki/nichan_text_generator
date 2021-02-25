@@ -166,7 +166,7 @@ pub fn apply_dice(text: &str) -> String {
     replace_result.to_owned().to_string()
 }
 
-fn create_date(_naive_date_time: NaiveDateTime) -> String  {
+pub fn create_date(_naive_date_time: NaiveDateTime) -> String  {
     let str = _naive_date_time.format("%Y/%m/%d(%a) %H:%M:%S.%f").to_string();
     str
 }
