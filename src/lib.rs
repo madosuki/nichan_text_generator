@@ -170,6 +170,25 @@ pub fn create_date(_naive_date_time: NaiveDateTime) -> String  {
     _naive_date_time.format("%Y/%m/%d(%a) %H:%M:%S.%f").to_string()
 }
 
+pub fn detect_tripkey_from_name(name: &str) -> Option<(String, String)> {
+
+    let mut splitter = name.splitn(2, "#");
+
+    let first = splitter.next();
+    
+    let second =
+        match splitter.next() {
+            Some(v) => Some(format!("#{}", v)),
+            None => None
+        };
+
+    match (first, second) {
+        (Some(x), Some(y)) => Some((x.to_string(), y)),
+        _ => None
+    }
+
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -208,5 +227,13 @@ mod tests {
         let date = NaiveDateTime::parse_from_str(date_str, date_format).unwrap();
 
         assert_eq!(create_date(date), "2021/02/17(Wed) 18:01:23.000000000");
+    }
+
+    #[test]
+    fn test_detect_tripkey_from_name() {
+        let trip_key = "#ニコニコ".to_owned();
+        let separated_name = "あいうえお".to_owned();
+        let source = "あいうえお#ニコニコ";
+        assert_eq!(detect_tripkey_from_name(source), Some((separated_name, trip_key)));
     }
 }
