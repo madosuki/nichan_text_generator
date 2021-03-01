@@ -138,7 +138,7 @@ pub fn create_id(naive_date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, s
     let hex_bytes = hex::decode(md5_str).unwrap();
     let md5_base64_str = base64::encode(hex_bytes);
 
-    md5_base64_str[..8].to_string()
+    format!("ID:{}", md5_base64_str[..8].to_string())
 }
 
 pub fn apply_dice(text: &str) -> String {
@@ -211,7 +211,7 @@ mod tests {
         let date_str = "2021/02/17 18:01:23";
         let date = NaiveDateTime::parse_from_str(date_str, date_format).unwrap();
 
-        assert_eq!(create_id(date, "key", "127.0.0.1", "test_secret_key"), "JBs13t0r");
+        assert_eq!(create_id(date, "key", "127.0.0.1", "test_secret_key"), "ID:JBs13t0r");
     }
 
     #[test]
