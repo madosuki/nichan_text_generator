@@ -107,8 +107,8 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
         }
     };
 
-    let base = key[1..].to_owned();
-    let bytes = WINDOWS_31J.encode(&base, EncoderTrap::Strict).unwrap();
+    let base = &key[1..];
+    let bytes = WINDOWS_31J.encode(base, EncoderTrap::Strict).unwrap();
 
     if bytes.len() < 12  {
         old_trip(bytes)
