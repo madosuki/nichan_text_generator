@@ -5,7 +5,7 @@ use crypto::digest::Digest;
 use crypto::sha1::Sha1;
 use crypto::md5::Md5;
 use pwhash::unix::crypt;
-use base64;
+use base64::prelude::*;
 use regex::Regex;
 
 use rand::Rng;
@@ -118,7 +118,7 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
         
         let sha1_str = hasher.result_str();
         let hex_bytes = hex::decode(sha1_str).unwrap();
-        let sha1_base64_str = base64::encode(hex_bytes);
+        let sha1_base64_str = BASE64_STANDARD.encode(hex_bytes);
 
         let result = format!("◆{}", sha1_base64_str[..12].to_string());
         
@@ -136,7 +136,7 @@ pub fn create_id(naive_date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, s
     hasher.input(target.as_bytes());
     let md5_str = hasher.result_str();
     let hex_bytes = hex::decode(md5_str).unwrap();
-    let md5_base64_str = base64::encode(hex_bytes);
+    let md5_base64_str = BASE64_STANDARD.encode(hex_bytes);
 
     format!("ID:{}", md5_base64_str[..8].to_string())
 }
