@@ -108,25 +108,31 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
     };
 
     let base = &key[1..];
-    let bytes = WINDOWS_31J.encode(base, EncoderTrap::Strict).unwrap();
+    if let Ok(bytes) = WINDOWS_31J.encode(base, EncoderTrap::Strict) {
 
-    if bytes.len() < 12  {
-        old_trip(bytes)
+        if bytes.len() < 12  {
+            old_trip(bytes)
+        } else {
+            let mut hasher = Sha1::new();
+            hasher.input(&bytes);
+        
+            let sha1_str = hasher.result_str();
+            let hex_bytes = hex::decode(sha1_str);
+            if hex_bytes.is_err() {
+                return None;
+            }
+            let sha1_base64_str = BASE64_STANDARD.encode(hex_bytes.unwrap());
+            
+            let result = format!("◆{}", sha1_base64_str[..12].to_string());
+        
+            Some(result)
+        }
     } else {
-        let mut hasher = Sha1::new();
-        hasher.input(&bytes);
-        
-        let sha1_str = hasher.result_str();
-        let hex_bytes = hex::decode(sha1_str).unwrap();
-        let sha1_base64_str = BASE64_STANDARD.encode(hex_bytes);
-
-        let result = format!("◆{}", sha1_base64_str[..12].to_string());
-        
-        Some(result)
+        None
     }
 }
 
-pub fn create_id(naive_date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, secret_key: &str) -> String {
+pub fn create_id(naive_date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, secret_key: &str) -> Option<String> {
     let a_day_tmp = naive_date_time.day();
     let a_day = if a_day_tmp < 10 { format!("0{}", a_day_tmp)} else { a_day_tmp.to_string() };
 
@@ -135,10 +141,13 @@ pub fn create_id(naive_date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, s
     let mut hasher = Md5::new();
     hasher.input(target.as_bytes());
     let md5_str = hasher.result_str();
-    let hex_bytes = hex::decode(md5_str).unwrap();
-    let md5_base64_str = BASE64_STANDARD.encode(hex_bytes);
+    if let Ok(hex_bytes) = hex::decode(md5_str) {
+        let md5_base64_str = BASE64_STANDARD.encode(hex_bytes);
 
-    format!("ID:{}", md5_base64_str[..8].to_string())
+        Some(format!("ID:{}", md5_base64_str[..8].to_string()))
+    } else {
+        None
+    }
 }
 
 pub fn apply_dice(text: &str) -> String {
@@ -163,7 +172,7 @@ pub fn apply_dice(text: &str) -> String {
         final_replace_string
     });
 
-    replace_result.to_owned().to_string()
+    replace_result.into_owned().to_string()
 }
 
 pub fn create_date(_naive_date_time: NaiveDateTime) -> String  {
@@ -211,7 +220,7 @@ mod tests {
         let date_str = "2021/02/17 18:01:23";
         let date = NaiveDateTime::parse_from_str(date_str, date_format).unwrap();
 
-        assert_eq!(create_id(date, "key", "127.0.0.1", "test_secret_key"), "ID:JBs13t0r");
+        assert_eq!(create_id(date, "key", "127.0.0.1", "test_secret_key"), Some("ID:JBs13t0r".to_owned()));
     }
 
     #[test]
