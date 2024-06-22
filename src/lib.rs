@@ -1,3 +1,4 @@
+use thiserror::Error;
 use std::collections::HashMap;
 use chrono::{NaiveDateTime, Datelike};
 use hex;
@@ -18,6 +19,13 @@ pub enum OldTripDigit {
     Eight,
     None
 }
+
+#[derive(Debug, Error)]
+pub enum NichanTextGeneratorError {
+    #[error("not apply dice command")]
+    NotApplyDiceCommand,
+}
+type NichanTextGeneratorResult<T> = std::result::Result<T, NichanTextGeneratorError>;
 
 pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
     let old_trip = |bytes: Vec<u8>| -> Option<String> {
@@ -150,29 +158,42 @@ pub fn create_id(naive_date_time: NaiveDateTime, bbs_key: &str, ip_addr: &str, s
     }
 }
 
-pub fn apply_dice(text: &str) -> String {
+pub fn apply_dice(text: &str) -> NichanTextGeneratorResult<String> {
     let re = Regex::new(r"!([0-9]{1,3})[dD]([0-9]{1,4})").unwrap();
 
     let tmp = text.to_owned();
 
-    let replace_result = re.replace_all(&tmp, |cap: &regex::Captures| {
+    let replace_result = re.replace_all(&tmp, |cap: &regex::Captures| -> String {
         let left_str = cap[1].to_owned();
         let right_str = cap[2].to_owned();
 
-        let target: i32 = cap[2].parse().unwrap();
-        let mut roll_max: i32 = cap[1].parse().unwrap();
+        let target: Result<i32, _> = cap[2].parse();
+        if target.is_err() {
+            return "".to_string();
+        }
+        let real_target = target.unwrap();
+        let parsed_roll_max: Result<i32, _> = cap[1].parse();
+        if parsed_roll_max.is_err() {
+            return "".to_string();
+        }
+        let mut roll_max = parsed_roll_max.unwrap();
         let mut result_number: i32 = 0;
         while roll_max != 0 {
-            result_number += rand::thread_rng().gen_range(0..(target + 1));
+            result_number += rand::thread_rng().gen_range(0..(real_target + 1));
             roll_max -= 1;
         }
 
         let final_replace_string = format!("【{}D{}: {}】", left_str, right_str, result_number).to_owned();
 
-        final_replace_string
+        final_replace_string.to_string()
     });
 
-    replace_result.into_owned().to_string()
+    if replace_result == "" {
+        Err(NichanTextGeneratorError::NotApplyDiceCommand)
+    } else {
+        let result = replace_result.into_owned();
+        Ok(result)
+    }
 }
 
 pub fn create_date(_naive_date_time: NaiveDateTime) -> String  {
