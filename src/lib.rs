@@ -247,7 +247,9 @@ mod tests {
     #[test]
     fn test_apply_dice() {
         let re = Regex::new(r"!([0-9]{1,3})[dD]([0-9]{1,4})").unwrap();
-        assert_eq!(re.is_match(&apply_dice("!1d100")), false);
+        let result = apply_dice("!1d100");
+        assert_eq!(result.is_ok(), true);
+        assert_eq!(re.is_match(&result.unwrap()), false);
     }
 
     #[test]
