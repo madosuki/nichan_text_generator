@@ -45,14 +45,14 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
             if count == 8 {
                 break;
             }
-
+            
             count = count + 1;
         }
 
 
         let salt_base_string: String = salt_base.iter().collect();
 
-        let prepare1 = 
+        let salt_base = 
             if salt_base_string.len() == 2 {
                 salt_base_string
             } else { format!("{}H.", salt_base_string) };
@@ -86,10 +86,10 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
             a.to_owned().chars().map(|x| find(x)).collect::<String>()
         };
     
-        let prepare2 = re.replace_all(&prepare1, ".");
-        let salt = my_tr(&prepare2);
+        let tmp_salt = re.replace_all(&salt_base, ".");
+        let final_salt = my_tr(&tmp_salt);
 
-        let _crypted = crypt(&key_base, &salt);
+        let _crypted = crypt(&key_base, &final_salt);
     
         let get_result = |a: &str| -> Option<String> {
             let start = a.len() - 
