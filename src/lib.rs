@@ -1,4 +1,3 @@
-use thiserror::Error;
 use std::collections::HashMap;
 use chrono::{NaiveDateTime, Datelike};
 use hex;
@@ -14,18 +13,14 @@ use rand::Rng;
 use encoding::{Encoding, EncoderTrap};
 use encoding::all::WINDOWS_31J;
 
+mod error;
+use error::{NichanTextGeneratorError, NichanTextGeneratorResult};
+
 pub enum OldTripDigit {
     Ten,
     Eight,
     None
 }
-
-#[derive(Debug, Error)]
-pub enum NichanTextGeneratorError {
-    #[error("not apply dice command")]
-    NotApplyDiceCommand,
-}
-type NichanTextGeneratorResult<T> = std::result::Result<T, NichanTextGeneratorError>;
 
 pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
     let old_trip = |bytes: Vec<u8>| -> Option<String> {
@@ -89,7 +84,7 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
         let tmp_salt = re.replace_all(&salt_base, ".");
         let final_salt = my_tr(&tmp_salt);
 
-        let _crypted = crypt(&key_base, &final_salt);
+        let crypted = crypt(&key_base, &final_salt);
     
         let get_result = |a: &str| -> Option<String> {
             let start = a.len() - 
@@ -106,10 +101,9 @@ pub fn create_trip(key: &str, digit: OldTripDigit) -> Option<String> {
             Some(result)
         };
 
-        match _crypted {
+        match crypted {
             Ok(v) => { get_result(&v) }
             Err(_e) => {
-                println!("crypt error: {}", _e);
                 None
             }
         }
